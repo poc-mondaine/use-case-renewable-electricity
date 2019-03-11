@@ -144,6 +144,9 @@ def main():
     print("\n\nHere comes the first 9 lines of the energy system as as a string value:\n")
     print(energySystem[:500])
 
+    percentage_unit = es.get_by_id_slow('percent')
+    print('Percent unit is: {}'.format(percentage_unit.description))
+
     # save it to a file
     es.save('test.esdl')
 

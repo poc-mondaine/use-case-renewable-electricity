@@ -94,21 +94,26 @@ class EnergySystemHandler:
                 assets.append(current_asset)
         return assets
 
-    # returns a generator of all assets of a specific type. Not only in the main Instance's  Area
-    # e.g. QuantityAndUnits can be defined in the KPI or in the EnergySystemInformation object
-    # this function returns them from both
+    # returns a generator of all assets of a specific type. Not only the ones defined in  the main Instance's Area
+    # e.g. QuantityAndUnits can be defined in the KPI of an Area or in the EnergySystemInformation object
+    # this function returns all of them at once
     def get_all_assets_of_type(self, esdl_type):
         return esdl_type.allInstances()
 
 
     # Using this function you can query for objects by ID
     # After loading an ESDL-file, all objects that have an ID defines are stored in resource.uuid_dict automatically
-    # If you add things later to the resource, it won't be added automatically to this dictionary though.
-    # For that you could use get
+    # Note: If you add things later to the resource, it won't be added automatically to this dictionary though.
+    # Use get_by_id_slow() for that
     def get_by_id(self, id):
         return self.resource.uuid_dict[id]
 
-
+    # This function iterates over all the contents of the Energy System and is much slower than get_by_id()
+    def get_by_id_slow(self, id):
+        for child in self.es.eAllContents():
+            if hasattr(child, 'id'):
+                if child.id == id:
+                    return child
 
     # create a readable list of the attributes of an ESDL class
     def get_asset_attribute(self, asset_name, attribute):
