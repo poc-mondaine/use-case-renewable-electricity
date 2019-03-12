@@ -5,6 +5,7 @@ from esdl.esdl import *
 import esdl
 from xmlresource import XMLResource
 import datetime
+from energy_system_handler import EnergySystemHandler
 
 
 def attr_to_dict(eobj):
@@ -33,6 +34,8 @@ def main():
     instance.aggrType = AggrTypeEnum.PER_COMMODITY
     es.instance.append( instance )
     es.instance[0].area = Area(name="test area")
+
+    # create a new PV parc with 10 panels
     pvparc = PVParc(name="PV parc")
     pvparc.numberOfPanels = 10
 
@@ -46,6 +49,17 @@ def main():
     ed.port.append(inPort)
     outPort = OutPort(id='OutPort1', connectedTo=[inPort])
     pvparc.port.append(outPort)
+
+    # create a new windturbine
+    turbine = WindTurbine(id=EnergySystemHandler.generate_uuid(),
+                          name='WindTurbine 4',
+                          power=2E6,
+                          fullLoadHours=2000,
+                          height=150.0,
+                          surfaceArea=100,
+                          prodType=RenewableTypeEnum.from_string('RENEWABLE'),
+                          type=WindTurbineTypeEnum.from_string('WIND_ON_LAND'))
+    es.instance[0].area.asset.append(turbine)
 
     es.instance[0].area.KPIs = KPIs(description="KPIs")
 
@@ -94,7 +108,7 @@ def main():
     print("Energy system: {}".format(attr_to_dict(es)))
     print("OutPort connectedTo: {}".format(outPort.connectedTo))
     print("InPort connectedTo: {}".format(inPort.connectedTo))
-    resource = rset.create_resource(URI('Static_model_test.esdl'))
+    resource = rset.create_resource(URI('mpoc.esdl'))
     resource.append(es)
     resource.save()
 

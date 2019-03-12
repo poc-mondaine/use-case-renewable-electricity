@@ -19,47 +19,44 @@ def connect_to_etm(scenario_id):
     return ETM_API(session,scenario_id)
 
 
-def get_number_of_assets(es, asset_name):
-    number_of_assets = es.count_number_of_assets(asset_name)
-
-    return number_of_assets
-
-
-def get_asset_attribute(es, asset_name, attribute):
-    asset_data = es.get_asset_attribute(asset_name, attribute)
-
-    return asset_data
-
-
-def update_energy_system_asset(es, asset_name, attribute):
-    es.update_asset(asset_name, attribute)
-
-    return
-
-
-def update_energy_system_kpi(es, kpi_name, attribute, value):
-    es.update_kpi(kpi_name, attribute, value)
-
-    return
-
-
 def main():
 
     # Load the energy system by its name
-    name = 'Static_model_test.esdl'
+    name = 'mpoc.esdl'
     es = EnergySystemHandler(name)
 
-    # Get number of PV parcs in the energy system
-    number_of_PV_parcs = get_number_of_assets(es, "PV parc")
+    # Energy System information can be used to globally define the quantity and units of this system,
+    # instead of defining them manually per KPI in each area: this fosters reuse (but is not necessary)
+    q_and_u = es.get_quantity_and_units()
 
-    # Get number of panels for the asset named "PV parc"
-    number_of_panels = get_asset_attribute(es, "PV parc", "numberOfPanels")
+    # Example: add percentage as quantity and unit to the energy system information
+    # if es.get_by_id('percent') is None:
+    #     unit = es.esdl.QuantityAndUnitType(id='percent', description='%', unit=es.esdl.UnitEnum.from_string('PERCENT'))
+    #     q_and_u.quantityAndUnit.append(unit)
+    #     percentage_renewables = es.esdl.KPI(name='Percentage Renewables', value=12.0)
+    #
+    # percentage_unit = es.get_by_id_slow('percent')
+    # print('Percent unit is: {}'.format(percentage_unit.description))
+
+    # Get list and number of all PV parcs
+    pv_parc_list = es.get_assets_of_type(es.esdl.PVParc)
+    number_of_PV_parcs = len(pv_parc_list)
+    print('\nNumber of PV parcs: {}'.format(number_of_PV_parcs))
+
+    # Get list and number of all wind turbines
+    wind_turbine_list = es.get_assets_of_type(es.esdl.WindTurbine)
+    number_of_wind_turbines = len(wind_turbine_list)
+    print('Number of wind turbines: {}'.format(number_of_wind_turbines))
+
+    # Sum the total number of panels for all PV parcs
+    total_panels_in_all_pv_parcs = sum(map(lambda pvparc: pvparc.numberOfPanels, pv_parc_list))
+    print('Total number of panels = {}'.format(total_panels_in_all_pv_parcs))
 
     # Connect to the ETM API for a specific scenario
     scenario_id = "1015160" # Keep using same ID, instead of creating many new ones
     etm = connect_to_etm(scenario_id)
 
-    print("ETM scenario_id: {}\n".format(etm.scenario_id))
+    print("\nETM scenario_id: {}".format(etm.scenario_id))
 
     # Determine the metrics (KPIs and relevant slider queries)
     metrics = [
@@ -71,7 +68,7 @@ def main():
     # Change the user values (slider settings) based on the energy system (from PICO)
     user_values = {
         "number_of_energy_power_solar_pv_solar_radiation": number_of_PV_parcs,
-        "number_of_energy_power_wind_turbine_coastal": 1000.0,
+        "number_of_energy_power_wind_turbine_coastal": number_of_wind_turbines,
         "number_of_energy_power_wind_turbine_inland": 4000.0,
         "number_of_energy_power_wind_turbine_offshore": 21000.0,
     }
@@ -81,24 +78,33 @@ def main():
 
     # Get and print the updated metrics
     metrics = etm.current_metrics
-    print(metrics)
-    print()
+    print(metrics, "\n")
 
     # Get the updated KPI values
     kpi_costs_value = metrics.loc['dashboard_total_costs', 'future']
     kpi_co2_value = metrics.loc['dashboard_co2_emissions_versus_start_year', 'future']
 
     # Update the energy system KPIs with the new values
-    update_energy_system_kpi(es, "KPI CO2-emissions", "value", kpi_co2_value)
-    update_energy_system_kpi(es, "KPI Total costs", "value", kpi_costs_value)
+    # get_kpi_by_id() does not work yet in current version of ESDL, so do it by name
+    # co2_emission = get_kpi_by_id(es, 'co2emission')
+    co2_emission = es.get_kpi_by_name('KPI CO2-emissions')
+    co2_emission.value = metrics.loc['dashboard_co2_emissions_versus_start_year', 'future']
+    print('{} is now {} {}'.format(co2_emission.name, co2_emission.value,
+                                   co2_emission.quantityAndUnit.description))
 
-    # Query the (possibly) updated solar pv capacity
-    solar_pv_capacity = metrics.loc['solar_park_installed_capacity', 'future']
+    total_costs = es.get_kpi_by_name('KPI Total costs')
+    total_costs.value = metrics.loc['dashboard_total_costs', 'future']
+    print('{} is now {} {}'.format(total_costs.name, total_costs.value,
+                                   total_costs.quantityAndUnit.description))
 
-    # Change the user values (slider settings) based on ETM user changes
-    # user_values = {
-    #     "number_of_energy_power_solar_pv_solar_radiation": solar_pv_capacity / 20.0,
-    # }
+    # Print the energy system as string
+    # When represented as a string we can easily send it via HTTP
+    # energySystem = es.get_as_string()
+    # print("\n\nHere comes the first 9 lines of the energy system as as a string value:\n")
+    # print(energySystem[:500])
+
+    # Save it to a file
+    es.save('mpoc.esdl')
 
 
 if __name__ == '__main__':

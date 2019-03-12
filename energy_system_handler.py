@@ -12,7 +12,8 @@ class EnergySystemHandler:
     def __init__(self, name):
         self.name = name
         self.es, self.resource, self.esdl, self.rset = self.load_energy_system(name)
-        print('Energy system \"{}\" is loaded!\n'.format(name))
+        print('\nEnergy system \"{}\" is loaded!'.format(name))
+
 
     # Creates a dict of all the attributes of an ESDL object
     @staticmethod
@@ -30,6 +31,7 @@ class EnergySystemHandler:
     @staticmethod
     def generate_uuid():
         return str(uuid.uuid4())
+
 
     def load_energy_system(self, name):
         # create a resourceSet that hold the contents of the esdl.ecore model and the instances we use/create
@@ -74,15 +76,29 @@ class EnergySystemHandler:
         # also return the esdlm and rset reference, so we can create esdl classes and store them as strings
         return es, resource, esdl, rset
 
-    # Count a number of assets of a specific ESDL type
-    def count_number_of_assets(self, esdl_type):
-        number_of_assets = 0
 
-        for current_asset in self.es.instance[0].area.asset:
-            if isinstance(current_asset, esdl_type):
-                number_of_assets += 1
+    # Add Energy System Information
+    def add_energy_system_information(self):
+        esi = self.esdl.EnergySystemInformation(id='energy_system_information')
+        self.es.EnergySystemInformation = esi
 
-        return number_of_assets
+
+    # Add energy system information to the energy system if it is not there yet
+    # Energy System information can be used to globally define the quantity and units of this system,
+    # instead of defining them manually per KPI in each area: this fosters reuse (but is not necessary)
+    def get_quantity_and_units(self):
+        q_and_u = None
+
+        if self.get_by_id('energy_system_information') is None:
+            self.add_energy_system_information()
+
+            q_and_u = self.esdl.QuantityAndUnits(id='quantity_and_units')
+            self.es.EnergySystemInformation.quantityAndUnits = q_and_u
+
+        else:
+            q_and_u = self.get_by_id('quantity_and_units')
+
+        return q_and_u
 
 
     # Get a list of assets of a specific ESDL type in the main instance's area
@@ -106,7 +122,10 @@ class EnergySystemHandler:
     # Note: If you add things later to the resource, it won't be added automatically to this dictionary though.
     # Use get_by_id_slow() for that
     def get_by_id(self, id):
-        return self.resource.uuid_dict[id]
+        if id in self.resource.uuid_dict:
+            return self.resource.uuid_dict[id]
+        else:
+            return None
 
     # This function iterates over all the contents of the Energy System and is much slower than get_by_id()
     def get_by_id_slow(self, id):
@@ -116,12 +135,12 @@ class EnergySystemHandler:
                     return child
 
     # create a readable list of the attributes of an ESDL class
-    def get_asset_attribute(self, asset_name, attribute):
+    def get_asset_attribute(self, esdl_type, attribute):
         asset_data = []
 
         for current_asset in self.es.instance[0].area.asset:
 
-            if current_asset.name == asset_name:
+            if instance(current_asset, esdl_type):
                 asset_data.append({
                     'name': current_asset.name,  # name
                     'attribute': {
@@ -130,17 +149,7 @@ class EnergySystemHandler:
                     }
                 })
 
-
         return asset_data
-
-
-    def update_asset(self, asset_name, attribute):
-        for current_asset in self.es.instance[0].area.asset:
-
-            if current_asset.name == asset_name:
-                setattr(current_asset, attribute)
-
-        return
 
 
     # returns a specific KPI by id, see also get_by_id for a faster method
@@ -157,16 +166,6 @@ class EnergySystemHandler:
                 return kpi
 
 
-    def update_kpi(self, kpi_name, attribute, value):
-        for current_kpi in self.es.instance[0].area.KPIs.kpi:
-
-            if current_kpi.name == kpi_name:
-                setattr(current_kpi, attribute, value)
-
-        self.resource.save()
-
-        return
-
     # save the resource
     def save(self, filename):
         uri = URI(filename)
@@ -175,6 +174,7 @@ class EnergySystemHandler:
         fileresource.append(self.es)
         # save the resource
         fileresource.save()
+
 
     # get the energy system as a XML String
     # does not change the 'active' resource
