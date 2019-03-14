@@ -1,3 +1,5 @@
+from time import sleep
+
 from pyecore.resources import ResourceSet, URI
 from pyecore.utils import DynamicEPackage, alias
 from pyecore.resources.resource import HttpURI
@@ -80,7 +82,7 @@ class EnergySystemHandler:
     # Add Energy System Information
     def add_energy_system_information(self):
         esi = self.esdl.EnergySystemInformation(id='energy_system_information')
-        self.es.EnergySystemInformation = esi
+        self.es.energySystemInformation = esi
 
 
     # Add energy system information to the energy system if it is not there yet
@@ -93,7 +95,7 @@ class EnergySystemHandler:
             self.add_energy_system_information()
 
             q_and_u = self.esdl.QuantityAndUnits(id='quantity_and_units')
-            self.es.EnergySystemInformation.quantityAndUnits = q_and_u
+            self.es.energySystemInformation.quantityAndUnits = q_and_u
 
         else:
             q_and_u = self.get_by_id('quantity_and_units')
@@ -140,7 +142,7 @@ class EnergySystemHandler:
 
         for current_asset in self.es.instance[0].area.asset:
 
-            if instance(current_asset, esdl_type):
+            if isinstance(current_asset, esdl_type):
                 asset_data.append({
                     'name': current_asset.name,  # name
                     'attribute': {
@@ -183,11 +185,11 @@ class EnergySystemHandler:
         # to use strings as resources, we simulate a string as being a file
         uri = StringURI('anyname.esdl')
         # create the string resource
-        stringresource = self.rset.create_resource(uri)
+        #stringresource = self.rset.create_resource(uri)
         # add the current energy system
-        stringresource.append(self.es)
+        #stringresource.append(self.es)
         # save the resource
-        stringresource.save()
+        self.resource.save(uri)
         # remove the temporary resource in the resource set
         #self.rset.remove_resource(stringresource)
         # return the string
