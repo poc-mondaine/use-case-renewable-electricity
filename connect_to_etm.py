@@ -1,14 +1,35 @@
+import sys
+
+import json
+
+from requests import Session, adapters
+
 from pyecore.resources import ResourceSet, URI
 from pyecore.utils import DynamicEPackage
 from pyecore.resources.resource import HttpURI
 from xmlresource import XMLResource
-
 
 # ETM modules
 from ETM_API import ETM_API, SessionWithUrlBase
 
 # ESDL modules
 from energy_system_handler import EnergySystemHandler
+
+
+def get_edr_response(asset_id):
+    session = Session()
+    response = session.get("http://edr.hesi.energy/store/esdl/{}".format(asset_id), verify=True)
+
+    return response.json()
+
+
+# key1 specifies name or value (first level of json response)
+# key2 specifies seconf level of json response
+def handle_edr_response(asset_id, key1, key2):
+    json_response = get_edr_response(asset_id)
+
+    return json_response[key1][key2]
+
 
 
 def connect_to_etm(scenario_id):
@@ -21,6 +42,14 @@ def connect_to_etm(scenario_id):
 
 def main():
 
+    # Get EDR specs for the surface area of an ETM wind turbine
+    asset_id = "aaa45007-8676-4ea5-b476-c672077ec3d9"
+    key1 = "value"
+    key2 = "surfaceArea"
+    wind_turbine_surface_area = handle_edr_response(asset_id, key1, key2)
+
+    print("Wind turbine surface area: {}".format(wind_turbine_surface_area))
+
     # Load the energy system by its name
     name = 'mpoc.esdl'
     es = EnergySystemHandler(name)
@@ -30,13 +59,13 @@ def main():
     q_and_u = es.get_quantity_and_units()
 
     # Example: add percentage as quantity and unit to the energy system information
-    # if es.get_by_id('percent') is None:
-    #     unit = es.esdl.QuantityAndUnitType(id='percent', description='%', unit=es.esdl.UnitEnum.from_string('PERCENT'))
-    #     q_and_u.quantityAndUnit.append(unit)
-    #     percentage_renewables = es.esdl.KPI(name='Percentage Renewables', value=12.0)
-    #
-    # percentage_unit = es.get_by_id_slow('percent')
-    # print('Percent unit is: {}'.format(percentage_unit.description))
+    if es.get_by_id('percent') is None:
+        unit = es.esdl.QuantityAndUnitType(id='percent', description='%', unit=es.esdl.UnitEnum.from_string('PERCENT'))
+        q_and_u.quantityAndUnit.append(unit)
+        percentage_renewables = es.esdl.KPI(name='Percentage Renewables', value=12.0)
+
+    percentage_unit = es.get_by_id_slow('percent')
+    print('Percent unit is: {}'.format(percentage_unit.description))
 
     # Get list and number of all PV parcs
     pv_parc_list = es.get_assets_of_type(es.esdl.PVParc)
@@ -51,6 +80,7 @@ def main():
     # Sum the total number of panels for all PV parcs
     total_panels_in_all_pv_parcs = sum(map(lambda pvparc: pvparc.numberOfPanels, pv_parc_list))
     print('Total number of panels = {}'.format(total_panels_in_all_pv_parcs))
+
 
     # Connect to the ETM API for a specific scenario
     scenario_id = "1015160" # Keep using same ID, instead of creating many new ones
@@ -67,7 +97,7 @@ def main():
 
     # Change the user values (slider settings) based on the energy system (from PICO)
     user_values = {
-        "number_of_energy_power_solar_pv_solar_radiation": number_of_PV_parcs,
+        "capacity_of_energy_power_solar_pv_solar_radiation": number_of_PV_parcs,
         "number_of_energy_power_wind_turbine_coastal": number_of_wind_turbines,
         "number_of_energy_power_wind_turbine_inland": 4000.0,
         "number_of_energy_power_wind_turbine_offshore": 21000.0,
@@ -99,9 +129,9 @@ def main():
 
     # Print the energy system as string
     # When represented as a string we can easily send it via HTTP
-    # energySystem = es.get_as_string()
-    # print("\n\nHere comes the first 9 lines of the energy system as as a string value:\n")
-    # print(energySystem[:500])
+    energySystem = es.get_as_string()
+    print("\n\nHere comes the first 9 lines of the energy system as as a string value:\n")
+    print(energySystem[:500])
 
     # Save it to a file
     es.save('mpoc.esdl')
