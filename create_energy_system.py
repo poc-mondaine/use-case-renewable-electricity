@@ -33,7 +33,7 @@ def main():
     # example of using an Enum
     instance.aggrType = AggrTypeEnum.PER_COMMODITY
     es.instance.append( instance )
-    es.instance[0].area = Area(name="test area")
+    es.instance[0].area = Area(name="Groningen", id="PV20")
 
     # create a new PV parc with 10 panels
     pvparc = PVParc(name="PV parc")
@@ -61,6 +61,25 @@ def main():
                           type=WindTurbineTypeEnum.from_string('WIND_ON_LAND'))
     es.instance[0].area.asset.append(turbine)
 
+    # create new wind search area
+    search_area_wind = SearchAreaWind(
+        id=EnergySystemHandler.generate_uuid(),
+        name="Search Area Wind",
+        fullLoadHours=1920,
+        area=2E8
+    )
+    es.instance[0].area.potential.append(search_area_wind)
+
+    # create new solar search area
+    search_area_solar = SearchAreaSolar(
+        id=EnergySystemHandler.generate_uuid(),
+        name="Search Area Solar",
+        fullLoadHours=867,
+        area=2E8
+    )
+    es.instance[0].area.potential.append(search_area_solar)
+
+    # create new KPIs object
     es.instance[0].area.KPIs = KPIs(description="KPIs")
 
     # Create quantity and unit for CO2-emissions
