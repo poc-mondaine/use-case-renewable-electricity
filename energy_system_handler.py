@@ -103,6 +103,18 @@ class EnergySystemHandler:
         return q_and_u
 
 
+    # Add KPIs object to Energy System
+    def add_kpis(self):
+        # create new KPIs object
+        kpis = self.esdl.KPIs(id='kpis', description='KPIs')
+        self.es.instance[0].area.KPIs = kpis
+
+
+    # Add KPI to KPIs object
+    def add_kpi(self, kpi):
+        self.es.instance[0].area.KPIs.kpi.append(kpi)
+
+
     # Get a list of assets of a specific ESDL type in the main instance's area
     def get_assets_of_type(self, esdl_type):
         assets = []
