@@ -5,15 +5,15 @@
   </energySystemInformation>
   <instance>
     <area id="PV20" name="Groningen" scope="PROVINCE">
-      <potential xsi:type="esdl:SearchAreaWind" area="881371500.0" fullLoadHours="2000"/>
       <KPIs description="KPIs" id="kpis">
-        <kpi name="KPI CO2-emissions" value="-0.252326043564164">
-          <quantityAndUnit xsi:type="esdl:QuantityAndUnitType" description="%" id="percent"/>
+        <kpi xsi:type="esdl:DoubleKPI" name="KPI CO2-emissions" value="-0.427726175301844" id="733238ed-6d4c-4b00-8b57-2d11fad55e16">
+          <quantityAndUnit xsi:type="esdl:QuantityAndUnitType" id="percent" description="%"/>
         </kpi>
-        <kpi name="KPI Total costs" value="6.583739726930397">
-          <quantityAndUnit xsi:type="esdl:QuantityAndUnitType" description="Meur" physicalQuantity="COST" multiplier="MEGA" id="meur"/>
+        <kpi xsi:type="esdl:DoubleKPI" name="KPI Total costs" value="4.632566320836999" id="c8f10242-b8d9-45ec-b631-32c576b7b39c">
+          <quantityAndUnit xsi:type="esdl:QuantityAndUnitType" id="meur" multiplier="MEGA" physicalQuantity="COST" description="Meur"/>
         </kpi>
       </KPIs>
+      <potential xsi:type="esdl:SearchAreaWind" fullLoadHours="2000" area="881371500.0"/>
     </area>
   </instance>
 </esdl:EnergySystem>

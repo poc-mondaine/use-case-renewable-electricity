@@ -6,7 +6,6 @@ import json
 import xml.etree.ElementTree as ET
 
 import requests
-
 from requests import Session, adapters
 
 from pyecore.resources import ResourceSet, URI
@@ -21,7 +20,7 @@ from ETM_API import ETM_API, SessionWithUrlBase
 from energy_system_handler import EnergySystemHandler
 
 
-def get_pico_response(area):
+def request_pico_response(area):
     session = Session()
 
     params = {
@@ -41,8 +40,6 @@ def get_pico_response(area):
     file.write(response.text)
     file.close()
 
-    return response
-
 
 # key1 specifies name or value (first level of json response)
 # key2 specifies second level of json response
@@ -53,10 +50,10 @@ def get_edr_response(asset_id):
         'format': 'xml'
     }
 
-    esdl_response = session.get("http://edr.hesi.energy/store/esdl/{}".format(asset_id), params=params, verify=True)
+    response = session.get("http://edr.hesi.energy/store/esdl/{}".format(asset_id), params=params, verify=True)
 
     file = open("edr.esdl", "w")
-    file.write(esdl_response.text)
+    file.write(response.text)
     file.close()
 
 
@@ -79,6 +76,7 @@ def get_specs():
 
     wind_turbine_surface_area = edr.es.surfaceArea
     wind_turbine_flh = edr.es.fullLoadHours
+    wind_turbine_power = edr.es.power
 
     # Get EDR specs for the surface area of an ETM solar PV parc
     # pv_parc_surface_area = 300000
@@ -86,10 +84,11 @@ def get_specs():
 
     print("Wind turbine surface area: {}".format(wind_turbine_surface_area))
     print("Wind turbine full load hours: {}".format(wind_turbine_flh))
+    print("Wind turbine power: {}".format(wind_turbine_power))
     # print("PV parc surface area: {}".format(pv_parc_surface_area))
     # print("PV parc full load hours: {}".format(pv_parc_flh))
 
-    return wind_turbine_surface_area, wind_turbine_flh
+    return wind_turbine_surface_area, wind_turbine_flh, wind_turbine_power
 
 
 def add_quantity_and_units(es):
@@ -110,23 +109,24 @@ def add_quantity_and_units(es):
 
 def add_kpis(es):
     # Create CO2-emissions KPI
-    kpi_co2 = es.esdl.KPI(
+    kpi_co2 = es.esdl.DoubleKPI(
+        id=es.generate_uuid(),
         name="KPI CO2-emissions",
-        value=None,
-        quantityAndUnit = es.get_by_id_slow('percent')
+        value=0.0,
+        quantityAndUnit=es.get_by_id_slow('percent')
     )
 
     # Create costs KPI
-    kpi_costs = es.esdl.KPI(
+    kpi_costs = es.esdl.DoubleKPI(
+        id=es.generate_uuid(),
         name="KPI Total costs",
-        value=None,
-        quantityAndUnit = es.get_by_id_slow('meur')
+        value=0.0,
+        quantityAndUnit=es.get_by_id_slow('meur')
     )
 
     es.add_kpis()
     es.add_kpi(kpi_co2)
     es.add_kpi(kpi_costs)
-
 
 
 def update_kpis(es, metrics):
@@ -144,12 +144,16 @@ def update_kpis(es, metrics):
                                    total_costs.quantityAndUnit.description))
 
 
-def main():
+def main(args):
+    # Get user input
+    geo_level = args[0]
+    geo_id = args[1]
 
-    wind_turbine_surface_area, wind_turbine_flh = get_specs()
+    # Get relevant specs from the EDR
+    wind_turbine_surface_area, wind_turbine_flh, wind_turbine_power = get_specs()
 
-    # Get ESDL from PICO and store it as 'pico.esdl'
-    get_pico_response("provincies/PV20")
+    # Request ESDL from PICO and store the response as 'pico.esdl'
+    request_pico_response("{}/{}".format(geo_level, geo_id))
 
     # Load the energy system by its name
     name = 'pico.esdl'
@@ -192,7 +196,7 @@ def main():
     # Change the user values (slider settings) based on the energy system (from PICO)
     user_values = {
         # "capacity_of_energy_power_solar_pv_solar_radiation": str(number_of_pv_parcs),
-        "number_of_energy_power_wind_turbine_inland": str(number_of_wind_turbines)
+        "capacity_of_energy_power_wind_turbine_inland": str(number_of_wind_turbines * wind_turbine_power / 1000000.0)
     }
 
     # Change the user inputs (i.e., set sliders)
@@ -216,4 +220,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
