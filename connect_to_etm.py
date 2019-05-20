@@ -8,6 +8,8 @@ import xml.etree.ElementTree as ET
 import requests
 from requests import Session, adapters
 
+import webbrowser
+
 from pyecore.resources import ResourceSet, URI
 from pyecore.utils import DynamicEPackage
 from pyecore.resources.resource import HttpURI
@@ -20,21 +22,21 @@ from ETM_API import ETM_API, SessionWithUrlBase
 from energy_system_handler import EnergySystemHandler
 
 
-def request_pico_response(area):
+def request_pico_response(area, params):
     session = Session()
 
-    params = {
-        'bebouwingsafstand': '200',
-        'restrictie': ['natuur','vliegveld','infrastructuur','turbines'],
-        'preverentie': ['agrarisch']
-    }
+    # params = {
+    #     'bebouwingsafstand': '300',
+    #     'restrictie': ['natuur,vliegveld'],
+    #     # 'preverentie': ['agrarisch']
+    # }
 
     headers = {
         'accept': 'application/esdl+xml'
     }
 
     # TODO: Include params in the GET request
-    response = session.get("https://pico.geodan.nl/pico/api/v1/{}/windturbinegebied".format(area), headers=headers, verify=True)
+    response = session.get("https://pico.geodan.nl/pico/api/v1/{}/windturbinegebied".format(area), params=params, headers=headers, verify=True)
 
     file = open("pico.esdl", "w")
     file.write(response.text)
@@ -144,16 +146,24 @@ def update_kpis(es, metrics):
                                    total_costs.quantityAndUnit.description))
 
 
-def main(args):
-    # Get user input
-    geo_level = args[0]
-    geo_id = args[1]
+def main():
+    geo_level = input("\nGebiedstype? (provincies / gemeenten)\n")
+    geo_id = input("\nGebiedscode?\n")
+    distance = input("\nBebouwingsafstand?\n")
+    restrictie = input("\nRestrictie (natuur / vliegveld / infrastructuur / agrarisch / turbines)?\n")
+    # preverentie = input("Preferentie (natuur / vliegveld / infrastructuur / agrarisch / turbines)?\n")
+
+    params = {
+        'bebouwingsafstand': distance,
+        'restrictie': ['{}'.format(restrictie)],
+        # 'preverentie': ['{}'.format(preverentie)]
+    }
 
     # Get relevant specs from the EDR
     wind_turbine_surface_area, wind_turbine_flh, wind_turbine_power = get_specs()
 
     # Request ESDL from PICO and store the response as 'pico.esdl'
-    request_pico_response("{}/{}".format(geo_level, geo_id))
+    request_pico_response("{}/{}".format(geo_level, geo_id), params)
 
     # Load the energy system by its name
     name = 'pico.esdl'
@@ -167,6 +177,7 @@ def main(args):
     # Get area of SearchAreaWind and determine number of wind turbines
     search_area_wind_list = es.get_potentials_of_type(es.esdl.SearchAreaWind)
     number_of_wind_turbines = search_area_wind_list[0].area / wind_turbine_surface_area
+    print('Total search area wind: {}'.format(search_area_wind_list[0].area))
     print('Number of wind turbines: {}'.format(number_of_wind_turbines))
 
     # Get area of SearchAreaSolar and determine number of solar PV parcs
@@ -218,6 +229,9 @@ def main(args):
     # Save it to a file
     es.save('pico.esdl')
 
+    # Open ETM scenario
+    webbrowser.open_new("https://beta-pro.energytransitionmodel.com/scenarios/{}".format(etm.scenario_id))
+
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
