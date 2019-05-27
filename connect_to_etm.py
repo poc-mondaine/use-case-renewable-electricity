@@ -151,16 +151,23 @@ def main():
     geo_id = input("\nGebiedscode?\n")
     distance = input("\nBebouwingsafstand?\n")
     restrictie = input("\nRestrictie (natuur / vliegveld / infrastructuur / agrarisch / turbines)?\n")
-    # preverentie = input("Preferentie (natuur / vliegveld / infrastructuur / agrarisch / turbines)?\n")
+    preferentie = input("\nPreferentie (natuur / vliegveld / infrastructuur / agrarisch / turbines)?\n")
 
     params = {
-        'bebouwingsafstand': distance,
-        'restrictie': ['{}'.format(restrictie)],
-        # 'preverentie': ['{}'.format(preverentie)]
+        'bebouwingsafstand': distance
     }
+
+    if restrictie is not "":
+        params['restrictie'] = '{}'.format(restrictie)
+
+    if preferentie is not "":
+        params['preverentie'] = '{}'.format(preferentie)
 
     # Get relevant specs from the EDR
     wind_turbine_surface_area, wind_turbine_flh, wind_turbine_power = get_specs()
+
+    # Tweak wind_turbine_surface_area for demo
+    wind_turbine_surface_area = 216500.0
 
     # Request ESDL from PICO and store the response as 'pico.esdl'
     request_pico_response("{}/{}".format(geo_level, geo_id), params)
