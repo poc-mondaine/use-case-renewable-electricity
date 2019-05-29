@@ -6,14 +6,14 @@
   <instance>
     <area scope="MUNICIPALITY" id="GM0164" name="Hengelo">
       <KPIs description="KPIs" id="kpis">
-        <kpi xsi:type="esdl:DoubleKPI" id="5b03afb2-70f7-4271-aa6d-2ac567ffee2c" name="KPI CO2-emissions" value="-0.00039110592849433967">
-          <quantityAndUnit xsi:type="esdl:QuantityAndUnitType" description="%" id="percent"/>
+        <kpi xsi:type="esdl:DoubleKPI" value="-0.0654541875300918" id="32722da2-82ad-4770-81ca-523aabc1b461" name="CO2-emissies">
+          <quantityAndUnit xsi:type="esdl:QuantityAndUnitType" id="percent" description="%"/>
         </kpi>
-        <kpi xsi:type="esdl:DoubleKPI" id="9f5691c2-75a9-4af2-baff-edb57ffcdc72" name="KPI Total costs" value="0.40275764603710956">
-          <quantityAndUnit xsi:type="esdl:QuantityAndUnitType" description="Meur" physicalQuantity="COST" multiplier="MEGA" id="meur"/>
+        <kpi xsi:type="esdl:DoubleKPI" value="0.4210004700782711" id="6a38567f-c29d-46d9-8206-5c5415be8f38" name="Totale kosten">
+          <quantityAndUnit xsi:type="esdl:QuantityAndUnitType" physicalQuantity="COST" id="meur" multiplier="MEGA" description="Meur"/>
         </kpi>
       </KPIs>
-      <potential xsi:type="esdl:SearchAreaWind" fullLoadHours="2000"/>
+      <potential xsi:type="esdl:SearchAreaWind" area="6928000.0" fullLoadHours="2000"/>
     </area>
   </instance>
 </esdl:EnergySystem>

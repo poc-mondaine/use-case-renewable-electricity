@@ -14,7 +14,7 @@ class EnergySystemHandler:
     def __init__(self, name):
         self.name = name
         self.es, self.resource, self.esdl, self.rset = self.load_energy_system(name)
-        print('\nEnergy system \"{}\" is loaded!'.format(name))
+        # print('\nEnergy system \"{}\" is loaded!'.format(name))
 
 
     # Creates a dict of all the attributes of an ESDL object

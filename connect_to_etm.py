@@ -84,9 +84,9 @@ def get_specs():
     # pv_parc_surface_area = 300000
     # pv_parc_flh = 867
 
-    print("Wind turbine surface area: {}".format(wind_turbine_surface_area))
-    print("Wind turbine full load hours: {}".format(wind_turbine_flh))
-    print("Wind turbine power: {}".format(wind_turbine_power))
+    # print("Wind turbine surface area: {}".format(wind_turbine_surface_area))
+    # print("Wind turbine full load hours: {}".format(wind_turbine_flh))
+    # print("Wind turbine power: {}".format(wind_turbine_power))
     # print("PV parc surface area: {}".format(pv_parc_surface_area))
     # print("PV parc full load hours: {}".format(pv_parc_flh))
 
@@ -113,7 +113,7 @@ def add_kpis(es):
     # Create CO2-emissions KPI
     kpi_co2 = es.esdl.DoubleKPI(
         id=es.generate_uuid(),
-        name="KPI CO2-emissions",
+        name='CO2-emissies',
         value=0.0,
         quantityAndUnit=es.get_by_id_slow('percent')
     )
@@ -121,7 +121,7 @@ def add_kpis(es):
     # Create costs KPI
     kpi_costs = es.esdl.DoubleKPI(
         id=es.generate_uuid(),
-        name="KPI Total costs",
+        name='Totale kosten',
         value=0.0,
         quantityAndUnit=es.get_by_id_slow('meur')
     )
@@ -135,14 +135,14 @@ def update_kpis(es, metrics):
     # Update the energy system KPIs with the new values
     # get_kpi_by_id() does not work yet in current version of ESDL, so do it by name
     # co2_emission = get_kpi_by_id(es, 'co2emission')
-    co2_emission = es.get_kpi_by_name('KPI CO2-emissions')
+    co2_emission = es.get_kpi_by_name('CO2-emissies')
     co2_emission.value = metrics.loc['dashboard_co2_emissions_versus_start_year', 'future']
-    print('{} is now {} {}'.format(co2_emission.name, co2_emission.value,
+    print('\n{}: {} {}'.format(co2_emission.name, co2_emission.value,
                                    co2_emission.quantityAndUnit.description))
 
-    total_costs = es.get_kpi_by_name('KPI Total costs')
+    total_costs = es.get_kpi_by_name('Totale kosten')
     total_costs.value = metrics.loc['dashboard_total_costs', 'future']
-    print('{} is now {} {}'.format(total_costs.name, total_costs.value,
+    print('{}: {} {}'.format(total_costs.name, total_costs.value,
                                    total_costs.quantityAndUnit.description))
 
 
@@ -184,8 +184,8 @@ def main():
     # Get area of SearchAreaWind and determine number of wind turbines
     search_area_wind_list = es.get_potentials_of_type(es.esdl.SearchAreaWind)
     number_of_wind_turbines = search_area_wind_list[0].area / wind_turbine_surface_area
-    print('Total search area wind: {}'.format(search_area_wind_list[0].area))
-    print('Number of wind turbines: {}'.format(number_of_wind_turbines))
+    # print('\nTotal search area wind: {}'.format(search_area_wind_list[0].area))
+    print('\nAantal wind turbines: {}'.format(number_of_wind_turbines))
 
     # Get area of SearchAreaSolar and determine number of solar PV parcs
     # search_area_solar_list = es.get_potentials_of_type(es.esdl.SearchAreaSolar)
@@ -195,15 +195,15 @@ def main():
     # Get area id and name
     area_id = es.es.instance[0].area.id
     area_name = es.es.instance[0].area.name
-    print('\nArea ID: {}'.format(area_id))
-    print('Area name: {}'.format(area_name))
+    # print('\nArea ID: {}'.format(area_id))
+    # print('Area name: {}'.format(area_name))
 
     # Connect to the ETM API for a specific scenario
     # scenario_id = "1015160" # Keep using same ID, instead of creating many new ones
     etm = connect_to_etm()
     etm.create_new_scenario(area_name, "{}_{}".format(area_id,str.lower(area_name)), "2050")
 
-    print("\nETM scenario_id: {}".format(etm.scenario_id))
+    # print("\nETM scenario_id: {}".format(etm.scenario_id))
 
     # Determine the metrics (KPIs and relevant slider queries)
     gqueries = [
@@ -222,7 +222,7 @@ def main():
 
     # Get and print the updated metrics
     metrics = etm.current_metrics
-    print(metrics, "\n")
+    # print(metrics, "\n")
 
     # Get the updated KPI values and update the ESDL KPIs in the energy system
     update_kpis(es, metrics)
@@ -230,8 +230,8 @@ def main():
     # Print the energy system as string
     # When represented as a string we can easily send it via HTTP
     energySystem = es.get_as_string()
-    print("\n\nHere comes the first 9 lines of the energy system as as a string value:\n")
-    print(energySystem[:500])
+    # print("\n\nHere comes the first 9 lines of the energy system as as a string value:\n")
+    # print(energySystem[:500])
 
     # Save it to a file
     es.save('pico.esdl')
